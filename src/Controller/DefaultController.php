@@ -137,8 +137,8 @@ namespace CORS\Bundle\AdminerBundle\Controller {
 }
 
 namespace {
-    use CORS\Bundle\AdminerBundle\Model\PimcoreDbRepository;
     use Pimcore\Cache;
+    use Pimcore\Db;
     use Pimcore\Tool\Session;
 
     if (!function_exists('adminer_object')) {
@@ -235,7 +235,7 @@ namespace {
                     $cacheKey = 'pimcore_adminer_databases';
 
                     if (!$return = Cache::load($cacheKey)) {
-                        $return = PimcoreDbRepository::getInstance()->findInSql('SELECT SCHEMA_NAME FROM information_schema.SCHEMATA');
+                        $return = Db::getConnection()->fetchAllAssociative('SELECT SCHEMA_NAME FROM information_schema.SCHEMATA');
 
                         foreach ($return as &$ret) {
                             $ret = $ret['SCHEMA_NAME'];
