@@ -25,9 +25,6 @@
         "coreshop/test-setup": "1.0.x-dev",
         "symfony/runtime": "^6.4"
     },
-    "conflict": {
-      "twig/twig": "^3.9"
-    },
     "autoload": {
         "psr-4": {
             "CORS\\Bundle\\AdminerBundle\\": "src/"
