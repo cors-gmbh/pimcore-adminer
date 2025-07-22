@@ -5,13 +5,13 @@ declare(strict_types=1);
 /*
  * CORS GmbH
  *
- * This source file is available under the GNU General Public License version 3 (GPLv3) license
+ * This source file is available under the MIT license
  *
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
  * @copyright  Copyright (c) CORS GmbH (https://www.cors.gmbh)
- * @license    https://www.cors.gmbh/license     GPLv3 and CCL
+ * @license    https://www.cors.gmbh/license MIT
  *
  */
 
@@ -27,9 +27,7 @@ namespace CORS\Bundle\AdminerBundle\Controller {
     {
         protected string $adminerHome = '';
 
-        /**
-         * @Route("/admin/CORSAdminerBundle/adminer", name="cors_adminer")
-         */
+        #[Route(path: '/admin/CORSAdminerBundle/adminer', name: 'cors_adminer')]
         public function adminerAction(?Profiler $profiler): Response
         {
             $this->prepare();
@@ -62,10 +60,8 @@ namespace CORS\Bundle\AdminerBundle\Controller {
             return $this->mergeAdminerHeaders($response);
         }
 
-        /**
-         * @Route("/admin/CORSAdminerBundle/adminer/static/{path}", requirements={"path"=".*"})
-         * @Route("/admin/CORSAdminerBundle/externals/{path}", requirements={"path"=".*"}, defaults={"type": "external"})
-         */
+        #[Route(path: '/admin/CORSAdminerBundle/adminer/static/{path}', requirements: ['path' => '.*'])]
+        #[Route(path: '/admin/CORSAdminerBundle/externals/{path}', requirements: ['path' => '.*'], defaults: ['type' => 'external'])]
         public function proxyAction(Request $request): Response
         {
             $this->prepare();

@@ -6,8 +6,8 @@
         "cors",
         "pimcore"
     ],
-    "homepage": "http://www.cors.gmbh",
-    "license": "GPL-3.0-or-later",
+    "homepage": "https://www.cors.gmbh",
+    "license": "MIT",
     "authors": [
         {
             "name": "CORS GmbH",
@@ -17,16 +17,14 @@
         }
     ],
     "require": {
-        "pimcore/admin-ui-classic-bundle": "^1.1",
-        "pimcore/pimcore": "^11.0",
+        "pimcore/admin-ui-classic-bundle": "^2.1",
+        "pimcore/pimcore": "^12.0",
         "vrana/adminer": "^4.17"
     },
     "require-dev": {
-        "coreshop/test-setup": "1.0.x-dev",
-        "symfony/runtime": "^6.4"
-    },
-    "conflict": {
-      "twig/twig": "^3.9"
+        "symfony/runtime": "^6.4",
+        "symfony/dotenv": "^7.3",
+        "coreshop/test-setup": "dev-main"
     },
     "autoload": {
         "psr-4": {
@@ -39,9 +37,6 @@
         ]
     },
     "extra": {
-        "branch-alias": {
-            "dev-11": "11.0-dev"
-        },
         "pimcore": {
             "bundles": [
                 "CORS\\Bundle\\AdminerBundle\\CORSAdminerBundle"
