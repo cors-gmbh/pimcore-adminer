@@ -1,10 +1,4 @@
 services:
-    CORS\Bundle\AdminerBundle\Installer:
-        public: true
-        arguments:
-            $bundle: "@=service('kernel').getBundle('CORSAdminerBundle')"
-
-
     CORS\Bundle\AdminerBundle\Controller\DefaultController:
         autowire: true
         autoconfigure: true

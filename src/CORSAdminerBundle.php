@@ -25,9 +25,4 @@ class CORSAdminerBundle extends AbstractPimcoreBundle
     {
         return 'CORS - Adminer Bundle';
     }
-
-    public function getInstaller(): ?Installer
-    {
-        return $this->container?->get(Installer::class);
-    }
 }
