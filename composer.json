@@ -1,54 +1,54 @@
 {
-    "name": "cors/adminer",
-    "type": "pimcore-bundle",
-    "description": "CORS - Adminer",
-    "keywords": [
-        "cors",
-        "pimcore"
-    ],
-    "homepage": "https://www.cors.gmbh",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "CORS GmbH",
-            "email": "office@cors.gmbh",
-            "homepage": "https://www.cors.gmbh/",
-            "role": "TEAM"
-        }
-    ],
-    "require": {
-        "pimcore/admin-ui-classic-bundle": "^2.1",
-        "pimcore/pimcore": "^12.0",
-        "vrana/adminer": "^4.17"
-    },
-    "require-dev": {
-        "symfony/runtime": "^6.4",
-        "symfony/dotenv": "^7.3",
-        "coreshop/test-setup": "dev-main"
-    },
-    "autoload": {
-        "psr-4": {
-            "CORS\\Bundle\\AdminerBundle\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "classmap": [
-            "Kernel.php"
-        ]
-    },
-    "extra": {
-        "pimcore": {
-            "bundles": [
-                "CORS\\Bundle\\AdminerBundle\\CORSAdminerBundle"
-            ]
-        }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "config": {
-        "allow-plugins": {
-            "php-http/discovery": true,
-            "symfony/runtime": true
-        }
+  "name": "cors/adminer",
+  "type": "pimcore-bundle",
+  "description": "CORS - Adminer",
+  "keywords": [
+    "cors",
+    "pimcore"
+  ],
+  "homepage": "https://www.cors.gmbh",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "CORS GmbH",
+      "email": "office@cors.gmbh",
+      "homepage": "https://www.cors.gmbh/",
+      "role": "TEAM"
     }
+  ],
+  "require": {
+    "pimcore/admin-ui-classic-bundle": "^2.1",
+    "pimcore/pimcore": "^12.0",
+    "vrana/adminer": "^4.17"
+  },
+  "require-dev": {
+    "symfony/runtime": "^6.4",
+    "symfony/dotenv": "^7.3",
+    "coreshop/test-setup": "dev-main"
+  },
+  "autoload": {
+    "psr-4": {
+      "CORS\\Bundle\\AdminerBundle\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "classmap": [
+      "Kernel.php"
+    ]
+  },
+  "extra": {
+    "pimcore": {
+      "bundles": [
+        "CORS\\Bundle\\AdminerBundle\\CORSAdminerBundle"
+      ]
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true,
+      "symfony/runtime": true
+    }
+  }
 }
