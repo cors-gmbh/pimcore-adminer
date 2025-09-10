@@ -15,10 +15,6 @@ Also shoutout to Blackbit (https://github.com/BlackbitDigitalCommerce) for the o
   ```
     CORS\Bundle\AdminerBundle\CORSAdminerBundle::class => ['all' => true],
   ```
-3. Run the installer
-  ```
-  bin/console pimcore:bundle:install CORSAdminerBundle
-  ```
 
 # Configuration
 
