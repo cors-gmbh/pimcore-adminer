@@ -9,3 +9,8 @@ services:
     CORS\Bundle\AdminerBundle\EventListener\AdminJsListener:
         tags:
             - { name: kernel.event_subscriber }
+
+    CORS\Bundle\AdminerBundle\Studio\WebpackEntryPointProvider:
+        public: false
+        tags:
+            - { name: pimcore_studio_ui.webpack_entry_point_provider }
