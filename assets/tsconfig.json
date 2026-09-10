@@ -5,9 +5,9 @@
     "target": "es2017",
     "moduleResolution": "bundler",
     "types": ["@types/webpack-env" ],
-    "baseUrl": "./js/",
+    "baseUrl": "./src/",
     "strictNullChecks": true,
-    "jsx": "react",
+    "jsx": "react-jsx",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
@@ -20,7 +20,7 @@
   },
 
   "include": [
-    "./js/**/*",
+    "./src/**/*",
     "./@mf-types/*"
   ],
 }

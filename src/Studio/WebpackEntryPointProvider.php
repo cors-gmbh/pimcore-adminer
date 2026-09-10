@@ -4,13 +4,26 @@ declare(strict_types=1);
 
 namespace CORS\Bundle\AdminerBundle\Studio;
 
-use Pimcore\Bundle\StudioUiBundle\Webpack\WebpackEntryPointProviderInterface;
+use Pimcore\Bundle\StudioUiBundle\Build\BuildArchive;
+use Pimcore\Bundle\StudioUiBundle\Build\BuildArchiveExtractionTrait;
+use Pimcore\Bundle\StudioUiBundle\Build\BuildArchiveProviderInterface;
 
-final class WebpackEntryPointProvider implements WebpackEntryPointProviderInterface
+/**
+ * The Studio build is shipped as Resources/build-dist/build-<id>.zip and unpacked into
+ * Resources/public/studio by Pimcore's BuildArchiveExtractor at cache warmup
+ * (pimcore/studio-ui-bundle#3779). The extractor is injected through the trait's
+ * #[Required] setter (see the explicit call in services.yaml, the service is not autowired).
+ */
+final class WebpackEntryPointProvider implements BuildArchiveProviderInterface
 {
-    public function getEntryPointsJsonLocations(): array
+    use BuildArchiveExtractionTrait;
+
+    protected function buildArchive(): BuildArchive
     {
-        return glob(__DIR__ . '/../Resources/public/build/*/entrypoints.json');
+        return new BuildArchive(
+            archiveGlob: __DIR__ . '/../Resources/build-dist/build*.zip',
+            targetDir: __DIR__ . '/../Resources/public/studio',
+        );
     }
 
     public function getEntryPoints(): array

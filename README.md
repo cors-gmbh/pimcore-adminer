@@ -25,23 +25,22 @@ Also shoutout to Blackbit (https://github.com/BlackbitDigitalCommerce) for the o
 
 This bundle ships with a Pimcore Studio plugin so that Adminer is available in the new Studio interface.
 
-## Build the Studio assets
+## Studio assets
 
-1. Change into the bundle's `assets` directory and install the dependencies:
-   ```bash
-   cd <bundle-root>/assets
-   npm install
-   ```
-2. Build the Studio bundle (outputs to `src/Resources/public/studio`):
-   ```bash
-   npm run build
-   ```
-3. Re-install the bundle assets in your Pimcore project if needed:
-   ```bash
-   bin/console assets:install --symlink --relative
-   ```
+The Studio plugin ships as a build archive in `src/Resources/build-dist/build-<id>.zip`;
+Pimcore's `BuildArchiveExtractor` unpacks it into `src/Resources/public/studio` at cache
+warmup, so a project needs no npm. The build id is a hash of the frontend sources, and the
+synced frontend-build workflow refreshes the archive on every push to a version branch.
 
-During development you can run `npm run dev` inside the `assets` directory to get an incremental build with file watching.
+To rebuild locally after changing the frontend code:
+
+```bash
+cd <bundle-root>/assets
+npm install
+npm run build        # writes the archive; commit it together with the source change
+```
+
+During development `npm run dev-server` inside `assets` starts the rsbuild dev server.
 
 # License
 MIT and therefore POCL compatible
