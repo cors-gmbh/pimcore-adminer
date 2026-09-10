@@ -54,6 +54,8 @@ namespace CORS\Bundle\AdminerBundle\Controller {
 
             $profiler?->disable();
 
+            $this->ensureSessionIsOpen();
+
             chdir($this->adminerHome . 'adminer');
             ob_start(static function (string $html) {
                 try {
@@ -74,6 +76,12 @@ namespace CORS\Bundle\AdminerBundle\Controller {
             include $this->adminerHome . 'adminer/index.php';
 
             @ob_get_flush();
+
+            // Persist whatever Adminer wrote to the session. Adminer calls exit() on its
+            // post-login redirect, in which case PHP's shutdown handler does this instead.
+            if (PHP_SESSION_ACTIVE === session_status()) {
+                session_write_close();
+            }
 
             $response = new Response();
 
@@ -188,18 +196,60 @@ namespace CORS\Bundle\AdminerBundle\Controller {
             $this->adminerHome = PIMCORE_COMPOSER_PATH . '/vrana/adminer/';
         }
 
+        /**
+         * Pimcore/Symfony starts a native PHP session to authenticate this request and closes
+         * it again before this controller runs, which leaves session_status() at
+         * PHP_SESSION_NONE while SID stays defined for the rest of the request. Adminer's own
+         * bootstrap only sets up its session when SID is undefined:
+         *
+         *     if (!defined("SID")) { session_name("adminer_sid"); ...; session_start(); }
+         *
+         * So Adminer skips that and then writes to $_SESSION while no session is open at all.
+         * Those writes - including the credentials stored on a successful login - are silently
+         * discarded, the next request starts logged out, and Adminer's auto-submitting login
+         * form redirects back to itself forever.
+         *
+         * Re-opening the session lets Adminer share Pimcore's session, which is what
+         * permanentLogin() already assumes by returning Pimcore's session id.
+         */
+        protected function ensureSessionIsOpen(): void
+        {
+            if (PHP_SESSION_ACTIVE !== session_status() && !headers_sent()) {
+                @session_start();
+            }
+        }
+
         protected function mergeAdminerHeaders(Response $response): Response
         {
             if (!headers_sent()) {
-                $headersRaw = headers_list();
+                $grouped = [];
 
-                foreach ($headersRaw as $header) {
-                    $header = explode(':', $header, 2);
-                    [$headerKey, $headerValue] = $header;
+                foreach (headers_list() as $header) {
+                    $parts = explode(':', $header, 2);
 
-                    if ($headerKey && $headerValue) {
-                        $response->headers->set($headerKey, $headerValue);
+                    if (2 !== \count($parts)) {
+                        continue;
                     }
+
+                    $headerKey = trim($parts[0]);
+                    $headerValue = trim($parts[1]);
+
+                    if ('' === $headerKey || '' === $headerValue) {
+                        continue;
+                    }
+
+                    $grouped[$headerKey][] = $headerValue;
+                }
+
+                /*
+                 * Headers have to be handed over as a list per name. Symfony's
+                 * ResponseHeaderBag::set() empties its entire cookie jar whenever it is called
+                 * for Set-Cookie with $replace = true, so setting them one at a time in a loop
+                 * kept only the last cookie and silently discarded every cookie Adminer had
+                 * set before it (adminer_permanent, adminer_key, ...).
+                 */
+                foreach ($grouped as $headerKey => $headerValues) {
+                    $response->headers->set($headerKey, $headerValues);
                 }
 
                 header_remove();
