@@ -54,7 +54,13 @@ namespace CORS\Bundle\AdminerBundle\Controller {
 
             $profiler?->disable();
 
-            $this->ensureSessionIsOpen();
+            $this->ensureSessionIsOpen($request);
+
+            // Adminer's stop_session() turns session.use_cookies off for the rest of the
+            // request. Symfony guards its own session start with
+            // `ini_get('session.use_cookies') && headers_sent()`, so leaving it off disables
+            // that guard for every listener running after this controller.
+            $useCookies = ini_get('session.use_cookies');
 
             chdir($this->adminerHome . 'adminer');
             ob_start(static function (string $html) {
@@ -76,6 +82,10 @@ namespace CORS\Bundle\AdminerBundle\Controller {
             include $this->adminerHome . 'adminer/index.php';
 
             @ob_get_flush();
+
+            if (false !== $useCookies) {
+                @ini_set('session.use_cookies', $useCookies);
+            }
 
             // Persist whatever Adminer wrote to the session. Adminer calls exit() on its
             // post-login redirect, in which case PHP's shutdown handler does this instead.
@@ -211,12 +221,29 @@ namespace CORS\Bundle\AdminerBundle\Controller {
          *
          * Re-opening the session lets Adminer share Pimcore's session, which is what
          * permanentLogin() already assumes by returning Pimcore's session id.
+         *
+         * It has to happen through Symfony's session object rather than a plain
+         * session_start(): Studio's SessionCloseSubscriber closed the session with
+         * $session->save(), which leaves NativeSessionStorage marked as not started. A raw
+         * start would leave that flag alone, and ContextListener writing the security token
+         * back on kernel.response would then call NativeSessionStorage::start() a second
+         * time - after Adminer already flushed its output, and with Adminer's
+         * `session.use_cookies = 0` disabling the headers_sent() guard, so the start fails
+         * with "Failed to start the session." and the response dies as a 502.
          */
-        protected function ensureSessionIsOpen(): void
+        protected function ensureSessionIsOpen(Request $request): void
         {
-            if (PHP_SESSION_ACTIVE !== session_status() && !headers_sent()) {
-                @session_start();
+            if (!$request->hasSession()) {
+                return;
             }
+
+            $session = $request->getSession();
+
+            if ($session->isStarted() || PHP_SESSION_ACTIVE === session_status() || headers_sent()) {
+                return;
+            }
+
+            $session->start();
         }
 
         protected function mergeAdminerHeaders(Response $response): Response
