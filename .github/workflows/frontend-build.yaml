@@ -1,0 +1,62 @@
+name: Studio Frontend Build
+
+# SYNCED FILE — Quelle: cors-gmbh/shared-workflows-private, templates/frontend-build.yml.
+# Änderungen hier werden beim nächsten Sync überschrieben.
+#
+# Baut das Pimcore-Studio-Plugin des Bundles über den Shared Workflow frontend-build
+# (cors-gmbh/shared-workflows) nach dem Build-Archiv-Modell: `npm run build` leitet die
+# Build-ID aus den Quellen ab und packt den Build mit Pimcores studio-package-build nach
+# Resources/build-dist/build-<id>.zip; der entpackte Build unter Resources/public/studio ist
+# gitignored und wird von Pimcores BuildArchiveExtractor beim Cache-Warmup entpackt. Das
+# Archiv einer unveränderten ID bleibt unangetastet, ein Build-Commit entsteht also nur bei
+# echten Quelländerungen.
+#
+# Der Workflow findet das npm-Projekt selbst (Repository-Root oder assets/) und staged die
+# Archive über den Default-Pathspec `*build-dist/*` — die Datei ist in allen Repos identisch.
+#
+# Pull Requests verifizieren nur, Pushes auf einen Versions-Branch committen die Archive.
+# Benötigte Secrets für den Commit hinter einem Ruleset: GH_APP_ID, GH_APP_PRIVATE_KEY.
+
+on:
+  pull_request:
+    branches: [ '*.x', 'main', 'master' ]
+    paths-ignore:
+      - '**/build-dist/**'
+  push:
+    branches: [ '*.x', 'main', 'master' ]
+    # Der Archiv-Commit berührt nur build-dist und löst so keinen weiteren Lauf aus.
+    paths-ignore:
+      - '**/build-dist/**'
+  workflow_dispatch:
+
+concurrency:
+  group: studio-frontend-build-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Gating auf `push` statt auf "kein Pull Request", damit ein manueller Lauf auf einem
+  # Feature-Branch dort keine Archive committet.
+  verify:
+    if: ${{ github.event_name != 'push' }}
+    permissions:
+      contents: read
+    uses: cors-gmbh/shared-workflows/.github/workflows/frontend-build.yaml@main
+    with:
+      commit: false
+      install-command: 'npm ci --ignore-scripts'
+
+  build:
+    if: ${{ github.event_name == 'push' }}
+    permissions:
+      contents: write
+    uses: cors-gmbh/shared-workflows/.github/workflows/frontend-build.yaml@main
+    with:
+      commit: true
+      install-command: 'npm ci --ignore-scripts'
+      commit-message: 'Build Studio bundle'
+    secrets:
+      gh_app_id: ${{ secrets.GH_APP_ID }}
+      gh_app_private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
