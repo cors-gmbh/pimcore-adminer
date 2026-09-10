@@ -1,3 +1,17 @@
 imports:
     - { resource: services.yaml }
     - { resource: 'local/' }
+
+# Project-level configuration of the test application. This used to live in the bundle's
+# Resources/config/pimcore/config.yaml, which Pimcore loads into EVERY installation the
+# bundle is registered in — a bundle has no business dictating the host project's Doctrine
+# or Encore setup.
+doctrine:
+    orm:
+        auto_generate_proxy_classes: '%kernel.debug%'
+        entity_managers:
+            default:
+                auto_mapping: true
+
+webpack_encore:
+    output_path: '%kernel.project_dir%/public/adminer'

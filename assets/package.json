@@ -1,13 +1,13 @@
 {
-  "name": "pimcore-studio-ui-demo-bundle",
+  "name": "cors-adminer-studio-plugin",
   "version": "0.0.1",
   "scripts": {
     "dev": "NODE_ENV=development rsbuild build",
     "dev-server": "NODE_ENV=dev-server rsbuild dev",
     "build": "rsbuild build && studio-package-build --build-dir ../src/Resources/public/studio --out-dir ../src/Resources/build-dist",
-    "lint": "eslint --ext .js,.jsx,.ts,.tsx ./js",
-    "lint-fix": "eslint --ext .js,.jsx,.ts,.tsx ./js --fix",
-    "lint-fix-watch": "nodemon --watch './js/**/*' --exec \"eslint --ext .js,.jsx,.ts,.tsx ./js --fix --cache\" -e js,jsx,ts,tsx",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx ./src",
+    "lint-fix": "eslint --ext .js,.jsx,.ts,.tsx ./src --fix",
+    "lint-fix-watch": "nodemon --watch './src/**/*' --exec \"eslint --ext .js,.jsx,.ts,.tsx ./src --fix --cache\" -e js,jsx,ts,tsx",
     "check-types": "tsc --noEmit",
     "check-types-watch": "tsc --noEmit --watch"
   },
@@ -36,7 +36,7 @@
     "whatwg-fetch": "^3.6.20"
   },
   "dependencies": {
-    "@pimcore/studio-ui-bundle": "2026.2.5",
+    "@pimcore/studio-ui-bundle": "2026.2.8",
     "nodemon": "^3.1.10",
     "react": "18.3.x",
     "react-dom": "18.3.x"

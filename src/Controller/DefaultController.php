@@ -18,18 +18,28 @@ declare(strict_types=1);
 namespace CORS\Bundle\AdminerBundle\Controller {
     use CORS\Bundle\AdminerBundle\lib\Pim\Helper;
     use Pimcore\Helper\Mail as MailHelper;
+    use Pimcore\Model\User;
+    use Pimcore\Security\User\User as SecurityUser;
+    use Pimcore\Tool\Authentication;
     use Symfony\Component\HttpFoundation\Request;
     use Symfony\Component\HttpFoundation\Response;
+    use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
     use Symfony\Component\HttpKernel\Profiler\Profiler;
     use Symfony\Component\Routing\Annotation\Route;
+    use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
     class DefaultController
     {
         protected string $adminerHome = '';
 
-        #[Route(path: '/admin/CORSAdminerBundle/adminer', name: 'cors_adminer')]
-        public function adminerAction(?Profiler $profiler): Response
+        public function __construct(private readonly ?TokenStorageInterface $tokenStorage = null)
         {
+        }
+
+        #[Route(path: '/admin/CORSAdminerBundle/adminer', name: 'cors_adminer')]
+        public function adminerAction(Request $request, ?Profiler $profiler): Response
+        {
+            $this->denyUnlessAdmin($request);
             $this->prepare();
 
             $profiler?->disable();
@@ -64,6 +74,7 @@ namespace CORS\Bundle\AdminerBundle\Controller {
         #[Route(path: '/admin/CORSAdminerBundle/externals/{path}', requirements: ['path' => '.*'], defaults: ['type' => 'external'])]
         public function proxyAction(Request $request): Response
         {
+            $this->denyUnlessAdmin($request);
             $this->prepare();
 
             $response = new Response();
@@ -82,9 +93,9 @@ namespace CORS\Bundle\AdminerBundle\Controller {
                     $path = 'adminer/' . $path;
                 }
 
-                $filePath = $this->adminerHome . '/' . $path;
-                if (!file_exists($filePath)) {
-                    $filePath = $this->adminerHome . 'adminer/static/' . $path;
+                $filePath = $this->resolveAssetPath($this->adminerHome . '/' . $path);
+                if (null === $filePath || !file_exists($filePath)) {
+                    $filePath = $this->resolveAssetPath($this->adminerHome . 'adminer/static/' . $path);
                 }
                 // it seems that css files need the right content-type (Chrome)
                 if (preg_match('@.css$@', $path)) {
@@ -93,7 +104,7 @@ namespace CORS\Bundle\AdminerBundle\Controller {
                     $response->headers->set('Content-Type', 'text/javascript');
                 }
 
-                if (file_exists($filePath)) {
+                if (null !== $filePath && file_exists($filePath)) {
                     $content = file_get_contents($filePath);
 
                     if (preg_match('@default.css$@', $path)) {
@@ -106,6 +117,59 @@ namespace CORS\Bundle\AdminerBundle\Controller {
             $response->setContent($content);
 
             return $this->mergeAdminerHeaders($response);
+        }
+
+        /**
+         * Adminer runs with the credentials of the Pimcore database connection and its own
+         * login() always succeeds, so the route itself has to establish who is calling.
+         *
+         * Relying on the host project's firewall is not enough: Studio-only installations
+         * (Pimcore 2026 dropped the classic admin) have no firewall covering /admin at all,
+         * which would leave this route open to anonymous requests.
+         *
+         * The Studio session and the classic admin session share the `pimcore_admin`
+         * security context, so the same session token backs both UIs and the iframe request
+         * Studio makes for the widget.
+         */
+        protected function denyUnlessAdmin(Request $request): void
+        {
+            $user = $this->getPimcoreUser($request);
+
+            if (!$user instanceof User || !$user->isAdmin()) {
+                throw new AccessDeniedHttpException('Adminer is available to Pimcore admin users only.');
+            }
+        }
+
+        protected function getPimcoreUser(Request $request): ?User
+        {
+            $securityUser = $this->tokenStorage?->getToken()?->getUser();
+
+            if ($securityUser instanceof SecurityUser) {
+                return $securityUser->getUser();
+            }
+
+            return Authentication::authenticateSession($request);
+        }
+
+        /**
+         * Confines a requested asset to the Adminer package. The path segment comes from the
+         * URL, so without this a request for `..%2f..%2f<something>.css` would read any
+         * css/js file on the filesystem.
+         */
+        protected function resolveAssetPath(string $filePath): ?string
+        {
+            $realPath = realpath($filePath);
+            $adminerRoot = realpath($this->adminerHome);
+
+            if (false === $realPath || false === $adminerRoot) {
+                return null;
+            }
+
+            if (!str_starts_with($realPath, $adminerRoot . \DIRECTORY_SEPARATOR)) {
+                return null;
+            }
+
+            return $realPath;
         }
 
         public function prepare(): void

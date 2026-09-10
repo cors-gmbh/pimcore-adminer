@@ -9,11 +9,6 @@ export const CORSAdminerExtension: AbstractModule = {
         const mainNavRegistryService = container.get<MainNavRegistry>(serviceIds.mainNavRegistry)
 
         mainNavRegistryService.registerMainNavItem({
-            path: 'Adminer',
-            icon: 'pimcore'
-        })
-
-        mainNavRegistryService.registerMainNavItem({
             path: 'System/Adminer',
             widgetConfig: {
                 name: 'DB Adminer',
