@@ -12,5 +12,9 @@ services:
 
     CORS\Bundle\AdminerBundle\Studio\WebpackEntryPointProvider:
         public: false
+        # BuildArchiveExtractionTrait's #[Required] setter, called explicitly in case the
+        # service is not autowired
+        calls:
+            - [setBuildArchiveExtractor, ['@Pimcore\Bundle\StudioUiBundle\Build\BuildArchiveExtractor']]
         tags:
             - { name: pimcore_studio_ui.webpack_entry_point_provider }
