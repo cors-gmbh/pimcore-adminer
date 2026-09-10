@@ -14,7 +14,7 @@ const containerStyle: CSSProperties = {
   height: '100%',
 };
 
-const ADMINER_ROUTE = '/admin/CORSAdminerBundle/adminer';
+const ADMINER_ROUTE = '/pimcore-studio/api/cors-adminer/adminer';
 
 export const AdminerWidget: FC = () => {
   const src = useMemo(() => ADMINER_ROUTE, []);

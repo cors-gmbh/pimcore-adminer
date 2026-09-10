@@ -17,20 +17,15 @@
         }
     ],
     "require": {
-        "pimcore/pimcore": "^12.0 || ^2026.1",
+        "pimcore/pimcore": "^2026.1",
+        "pimcore/studio-ui-bundle": "^2026.1",
         "vrana/adminer": "^4.17"
     },
     "require-dev": {
         "symfony/runtime": "^6.4",
         "symfony/dotenv": "^7.3",
         "coreshop/test-setup": "dev-main",
-        "pimcore/opensearch-client": "^2.1",
-        "pimcore/admin-ui-classic-bundle": "^2.1",
-        "pimcore/studio-ui-bundle": "^2025.4.12 || ^2026.1"
-    },
-    "suggest": {
-        "pimcore/admin-ui-classic-bundle": "Required for using the Pimcore Admin UI Classic.",
-        "pimcore/studio-ui-bundle": "Required for using the Pimcore Studio UI."
+        "pimcore/opensearch-client": "^2.1"
     },
     "autoload": {
         "psr-4": {
@@ -56,8 +51,5 @@
             "php-http/discovery": true,
             "symfony/runtime": true
         }
-    },
-    "conflict": {
-        "pimcore/studio-ui-bundle": "<2025.4.12"
     }
 }

@@ -6,10 +6,6 @@ services:
         tags:
             - { name: controller.service_arguments }
 
-    CORS\Bundle\AdminerBundle\EventListener\AdminJsListener:
-        tags:
-            - { name: kernel.event_subscriber }
-
     CORS\Bundle\AdminerBundle\Studio\WebpackEntryPointProvider:
         public: false
         # BuildArchiveExtractionTrait's #[Required] setter, called explicitly in case the

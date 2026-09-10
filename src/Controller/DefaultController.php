@@ -30,13 +30,23 @@ namespace CORS\Bundle\AdminerBundle\Controller {
 
     class DefaultController
     {
+        /**
+         * Adminer lives under the Pimcore Studio API prefix so that it is covered by the
+         * `pimcore_studio` firewall and the `^/pimcore-studio/api` access control every
+         * Studio installation already has — Pimcore 2026 has no firewall on `/admin` any
+         * more. The prefix is the Studio default; installations that change
+         * `pimcore_studio_backend.url_prefix` fall back to the admin check in this
+         * controller, which never depends on the firewall.
+         */
+        public const ROUTE_PREFIX = '/pimcore-studio/api/cors-adminer';
+
         protected string $adminerHome = '';
 
         public function __construct(private readonly ?TokenStorageInterface $tokenStorage = null)
         {
         }
 
-        #[Route(path: '/admin/CORSAdminerBundle/adminer', name: 'cors_adminer')]
+        #[Route(path: self::ROUTE_PREFIX . '/adminer', name: 'cors_adminer')]
         public function adminerAction(Request $request, ?Profiler $profiler): Response
         {
             $this->denyUnlessAdmin($request);
@@ -49,12 +59,12 @@ namespace CORS\Bundle\AdminerBundle\Controller {
                 try {
                     if (method_exists(MailHelper::class, 'setAbsolutePaths')) {
                         /** @psalm-suppress InternalMethod, InternalClass */
-                        $html = MailHelper::setAbsolutePaths($html, null, Helper::getHostUrl() . '/admin/CORSAdminerBundle/adminer');
+                        $html = MailHelper::setAbsolutePaths($html, null, Helper::getHostUrl() . self::ROUTE_PREFIX . '/adminer');
                     } else {
                         throw new \Exception('Method setAbsolutePaths does not exist in MailHelper.');
                     }
 
-                    return str_replace('static/editing.js', Helper::getHostUrl() . '/admin/CORSAdminerBundle/adminer/static/editing.js', $html);
+                    return str_replace('static/editing.js', Helper::getHostUrl() . self::ROUTE_PREFIX . '/adminer/static/editing.js', $html);
                 } catch (\Exception $e) {
                     throw new \Exception('Error in MailHelper::setAbsolutePaths: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine());
                 }
@@ -70,8 +80,8 @@ namespace CORS\Bundle\AdminerBundle\Controller {
             return $this->mergeAdminerHeaders($response);
         }
 
-        #[Route(path: '/admin/CORSAdminerBundle/adminer/static/{path}', requirements: ['path' => '.*'])]
-        #[Route(path: '/admin/CORSAdminerBundle/externals/{path}', requirements: ['path' => '.*'], defaults: ['type' => 'external'])]
+        #[Route(path: self::ROUTE_PREFIX . '/adminer/static/{path}', requirements: ['path' => '.*'])]
+        #[Route(path: self::ROUTE_PREFIX . '/externals/{path}', requirements: ['path' => '.*'], defaults: ['type' => 'external'])]
         public function proxyAction(Request $request): Response
         {
             $this->denyUnlessAdmin($request);
@@ -123,13 +133,13 @@ namespace CORS\Bundle\AdminerBundle\Controller {
          * Adminer runs with the credentials of the Pimcore database connection and its own
          * login() always succeeds, so the route itself has to establish who is calling.
          *
-         * Relying on the host project's firewall is not enough: Studio-only installations
-         * (Pimcore 2026 dropped the classic admin) have no firewall covering /admin at all,
-         * which would leave this route open to anonymous requests.
+         * The Studio firewall in front of ROUTE_PREFIX only gets us an authenticated Pimcore
+         * user (ROLE_PIMCORE_USER in a standard setup); full database access is for admins,
+         * and the check may not depend on a project's access_control rules being present.
          *
-         * The Studio session and the classic admin session share the `pimcore_admin`
-         * security context, so the same session token backs both UIs and the iframe request
-         * Studio makes for the widget.
+         * The user comes from the security token, or from the `pimcore_admin` session context
+         * the Studio login writes — which is what authenticates the iframe request Studio
+         * makes for the widget.
          */
         protected function denyUnlessAdmin(Request $request): void
         {

@@ -17,7 +17,6 @@ declare(strict_types=1);
 
 use Pimcore\HttpKernel\BundleCollection\BundleCollection;
 use Pimcore\Kernel as PimcoreKernel;
-use Pimcore\Bundle\AdminBundle\PimcoreAdminBundle;
 use CORS\Bundle\AdminerBundle\CORSAdminerBundle;
 use Symfony\WebpackEncoreBundle\WebpackEncoreBundle;
 
@@ -26,8 +25,6 @@ class Kernel extends PimcoreKernel
     public function registerBundlesToCollection(BundleCollection $collection): void
     {
         $collection->addBundle(new CORSAdminerBundle());
-        $collection->addBundle(new PimcoreAdminBundle(), 60);
         $collection->addBundle(new WebpackEncoreBundle());
-
     }
 }

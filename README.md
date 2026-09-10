@@ -1,14 +1,18 @@
 CORS Adminer Bundle
 --------
 
-We love Adminer! And we had to bring it back. This bundle brings back Adminer into Pimcore 12.
+We love Adminer! And we had to bring it back. This bundle brings Adminer into Pimcore Studio.
 
 Also shoutout to Blackbit (https://github.com/BlackbitDigitalCommerce) for the original implementation for Pimcore 12. We separeted this from the amazing DataDirector Bundle into a standalone bundle.
 
+> **Branch 2026.x is Pimcore 2026.x and Pimcore Studio only.** The classic admin UI was
+> removed from Pimcore 2026, so this branch ships no ExtJS integration. For Pimcore 11 use
+> branch `1.x`, for Pimcore 12.3 with the classic admin use `2.x`.
+
 # Installation
 
-Requires Pimcore 12.3 or Pimcore 2026.x, PHP 8.3+. The classic admin UI bundle is optional —
-the bundle adds its entry to whichever UI is installed.
+Requires Pimcore 2026.1 or newer with `pimcore/studio-ui-bundle` (a hard dependency — the
+bundle is a Studio plugin).
 
 ## 1. `composer.json` — allow the Adminer advisory, then require the bundle
 
@@ -20,9 +24,9 @@ Composer refuses to install `vrana/adminer` 4.17 because of advisory
   but these were not loaded, because they are affected by security advisories
 ```
 
-The route is admin-only (see *Access control* below), so the endpoint is not reachable
-without a Pimcore admin session. To install, add the advisory to the ignore list in your
-project's `composer.json`:
+Adminer is only reachable for logged-in Pimcore admins (see *Access control*), so the
+endpoint is not exposed. To install, add the advisory to the ignore list in your project's
+`composer.json`:
 
 ```json
 {
@@ -53,45 +57,7 @@ return [
 Restrict it to the environments that should have database access, e.g.
 `['dev' => true, 'staging' => true]`.
 
-## 3. `config/packages/security.yaml` — protect the route (Studio-only installations)
-
-**Skip this step if pimcore/admin-ui-classic-bundle is installed** — its `pimcore_admin`
-firewall already covers `/admin`.
-
-Pimcore 2026 dropped the classic admin, and with it the firewall on `/admin`. The bundle's
-controller refuses anyone who is not a Pimcore admin on its own, but add the firewall so
-Symfony's access control applies before the controller runs:
-
-```yaml
-security:
-    firewalls:
-        # … after the pimcore_studio firewall, before any request_matcher firewalls
-        cors_adminer:
-            pattern: ^/admin/CORSAdminerBundle
-            provider: pimcore_admin        # Pimcore\Security\User\UserProvider
-            context: pimcore_admin         # reuse the session token the Studio login writes
-            stateless: false
-            user_checker: Pimcore\Security\User\UserChecker
-
-    access_control:
-        # … before any broader ^/admin rule
-        - { path: ^/admin/CORSAdminerBundle, roles: ROLE_PIMCORE_ADMIN }
-```
-
-The firewall carries no authenticator on purpose: `context: pimcore_admin` restores the token
-Studio wrote at login, which is what authenticates the iframe request Studio makes for the
-widget. Anonymous requests get 401.
-
-If your `providers:` block has no `pimcore_admin` entry, add one:
-
-```yaml
-security:
-    providers:
-        pimcore_admin:
-            id: Pimcore\Security\User\UserProvider
-```
-
-## 4. Publish the assets — in this order
+## 3. Publish the assets — in this order
 
 ```bash
 bin/console cache:clear        # warmup unpacks the Studio build archive into the bundle
@@ -105,43 +71,79 @@ the extractor writes into `vendor/`, which is usually read-only at runtime. If y
 with `--symlink`, the webserver container needs the same `vendor/` mount as PHP, otherwise
 the Studio plugin's `exposeRemote.js` 404s and the plugin is silently absent.
 
-## 5. Verify
+**No security configuration is needed** — see *Access control*.
+
+## 4. Verify
 
 ```bash
 bin/console debug:router | grep -i adminer      # cors_adminer + two proxy routes
-curl -sk -o /dev/null -w '%{http_code}\n' https://<host>/admin/CORSAdminerBundle/adminer
-                                                # 401/403 when not logged in — never 200
+curl -sk -o /dev/null -w '%{http_code}\n' \
+  https://<host>/pimcore-studio/api/cors-adminer/adminer          # 401/403 when logged out
 curl -sk -o /dev/null -w '%{http_code}\n' \
   https://<host>/bundles/corsadminer/studio/<build-id>/static/js/remoteEntry.js   # 200
 ```
 
-Then open Studio and pick **System → Adminer**; in the classic admin it is
-**Tools → System Info & Tools → Database Administration**.
+Then open Studio and pick **System → Adminer**.
 
 # Access control
 
-Adminer connects with the credentials of the Pimcore database connection and its own login
-always succeeds, so the route decides who gets in: it serves Pimcore **admin** users only and
-answers everyone else with 403. The check runs inside the controller, because the host
-project's firewall cannot be relied upon — Studio-only installations have no firewall covering
-`/admin` at all, which would otherwise leave the route open to anonymous requests.
+The routes live under the Studio API prefix:
 
-The user is taken from the security token, or from the `pimcore_admin` session context that
-both the classic admin and Studio write on login, which is what makes the Studio widget's
-iframe request work.
+| Route | Path |
+| --- | --- |
+| `cors_adminer` | `/pimcore-studio/api/cors-adminer/adminer` |
+| asset proxy | `/pimcore-studio/api/cors-adminer/adminer/static/{path}` |
+| externals proxy | `/pimcore-studio/api/cors-adminer/externals/{path}` |
+
+That prefix is what every Studio installation already protects, so the bundle needs no
+firewall or `access_control` of its own:
+
+- the `pimcore_studio` firewall (`^/pimcore-studio/api(/.*)?$`) authenticates the request from
+  the session token the Studio login writes — which is what makes the widget's iframe work;
+- the `- { path: ^/pimcore-studio/api, roles: ROLE_PIMCORE_USER }` access-control rule of a
+  standard Studio setup keeps anonymous requests out.
+
+On top of that the controller itself serves **Pimcore admin users only** and answers everyone
+else with 403 — Adminer connects with the credentials of the Pimcore database connection and
+its own login always succeeds, so the route must establish who is calling and may not depend
+on the host project's configuration. The user is read from the security token, falling back to
+the `pimcore_admin` session context.
+
+If you change `pimcore_studio_backend.url_prefix`, adjust
+`DefaultController::ROUTE_PREFIX` expectations accordingly — the routes are registered under
+the Studio default prefix, and only the controller's own admin check would still apply.
+
+## Webserver note
+
+The asset proxy serves URLs ending in `.css` and `.js`. If your webserver resolves those from
+disk before passing the request to PHP (the classic Pimcore nginx recipe does, usually with an
+exception for `/admin`), add an exception for the Adminer path, e.g.:
+
+```nginx
+location ~* ^/pimcore-studio/api/cors-adminer {
+    rewrite .* /index.php$is_args$args last;
+}
+```
+
+## Rate limiting
+
+Studio's `RateLimitSubscriber` applies to everything under the API prefix: 500 requests per
+minute per client IP, shared with the rest of Studio. A page view in Adminer costs a handful
+of requests, so this is only worth knowing if you script against it.
 
 ## Troubleshooting
 
-- **401/403 inside the Studio widget although you are logged in** — your Studio firewall uses
-  a security context other than `pimcore_admin`. Check `context:` in
-  `%pimcore_studio_backend.firewall_settings%` and use the same value for the `cors_adminer`
-  firewall.
+- **401 on the widget although you are logged in** — your project changed
+  `pimcore_studio_backend.url_prefix`, so the routes fall outside the `pimcore_studio`
+  firewall. Either keep the default prefix or add a firewall for
+  `^/pimcore-studio/api/cors-adminer` with `context: pimcore_admin`.
+- **403 with "Adminer is available to Pimcore admin users only"** — the logged-in user is not
+  a Pimcore admin. That is by design.
 - **No Adminer entry in Studio** — the plugin assets are not reachable. Request
-  `/bundles/corsadminer/studio/<build-id>/static/js/remoteEntry.js`; a 404 means step 4 ran in
-  the wrong order, or the webserver cannot follow the asset symlink.
-- **Adminer opens but the page is unstyled** — the `default.css` proxy route
-  (`/admin/CORSAdminerBundle/adminer/static/...`) is being blocked; it is behind the same
-  admin check as the main route.
+  `/bundles/corsadminer/studio/<build-id>/static/js/remoteEntry.js`; a 404 means the publish
+  step ran in the wrong order, or the webserver cannot follow the asset symlink.
+- **Adminer opens but is unstyled** — the webserver is resolving the proxy's `.css`/`.js`
+  URLs from disk; see *Webserver note*.
 
 # Pimcore Studio
 
@@ -156,7 +158,7 @@ synced frontend-build workflow refreshes the archive on every push to a version 
 
 The npm version of `@pimcore/studio-ui-bundle` in `assets/package.json` has to match the
 composer-installed PHP bundle of the target installation; the shared module federation
-singletons break otherwise. The archive in this branch is built against 2026.2.8.
+singletons break otherwise. The archive on this branch is built against 2026.2.8.
 
 To rebuild locally after changing the frontend code (Node 22):
 
