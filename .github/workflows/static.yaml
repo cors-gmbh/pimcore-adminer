@@ -1,17 +1,28 @@
 name: Static Tests
+
 on:
   push:
-    branches: [ main ]
+    branches: [ '*.x' ]
   pull_request:
-    branches: [ main ]
-  release:
-    types: [ created ]
-  schedule:
-    - cron: "0 1 * * 1"
+    branches: [ '*.x' ]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  static:
-    uses: coreshop/workflow-collection/.github/workflows/static.yml@main
+  test:
+    uses: cors-gmbh/shared-workflows/.github/workflows/php-test.yaml@main
+    with:
+      # single source of truth for the PHP version: DOCKER_PHP_VERSION in .env
+      versions-from-env: true
+      phpstan: true
+      psalm: true
+      lint-yaml-paths: 'config src/Resources/config'
+    secrets:
+      composer_auth: ${{ secrets.COMPOSER_AUTH }}
+      # Pimcore refuses to boot without a registered instance; php-test writes this to .env.local.
+      env_local: |
+        PIMCORE_ENCRYPTION_SECRET=${{ secrets.PIMCORE_ENCRYPTION_SECRET }}
+        PIMCORE_INSTANCE_IDENTIFIER=${{ secrets.PIMCORE_INSTANCE_IDENTIFIER }}
+        PIMCORE_PRODUCT_KEY=${{ secrets.PIMCORE_PRODUCT_KEY }}

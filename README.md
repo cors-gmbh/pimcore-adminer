@@ -170,5 +170,12 @@ npm run build        # writes the archive; commit it together with the source ch
 
 During development `npm run dev-server` inside `assets` starts the rsbuild dev server.
 
+## Product registration
+
+The test application boots only with a registered Pimcore instance. The instance identifier
+(`PIMCORE_INSTANCE_IDENTIFIER`) is committed in `.env`; put `PIMCORE_ENCRYPTION_SECRET` and
+`PIMCORE_PRODUCT_KEY` of an instance registered at license.pimcore.com into your uncommitted
+`.env.local`. CI gets the same three values from the repository secrets of the same name.
+
 # License
 MIT and therefore POCL compatible

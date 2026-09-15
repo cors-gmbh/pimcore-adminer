@@ -1,6 +1,16 @@
 imports:
     - { resource: services.yaml }
+    - { resource: license.yaml }
     - { resource: 'local/' }
+
+parameters:
+    # Registration values come from .env.local (dev stack, instance registered at
+    # license.pimcore.com) or from the repository secrets (CI, written to .env.local by
+    # php-test). Pimcore refuses to boot without them; the empty defaults only keep the
+    # container compilable when the variables are absent.
+    env(PIMCORE_ENCRYPTION_SECRET): ''
+    env(PIMCORE_INSTANCE_IDENTIFIER): ''
+    env(PIMCORE_PRODUCT_KEY): ''
 
 # Project-level configuration of the test application. This used to live in the bundle's
 # Resources/config/pimcore/config.yaml, which Pimcore loads into EVERY installation the
