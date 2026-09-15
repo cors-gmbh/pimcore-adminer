@@ -14,36 +14,16 @@ Also shoutout to Blackbit (https://github.com/BlackbitDigitalCommerce) for the o
 Requires Pimcore 2026.1 or newer with `pimcore/studio-ui-bundle` (a hard dependency — the
 bundle is a Studio plugin).
 
-## 1. `composer.json` — allow the Adminer advisory, then require the bundle
-
-Composer refuses to install `vrana/adminer` 4.17 because of advisory
-`PKSA-5hbx-ykrq-c4p8` (CVE-2026-25892, a DoS in `?script=version`, affects `>=4.6.2,<5.4.2`):
-
-```
-- Root composer.json requires vrana/adminer ^4.17, found vrana/adminer[v4.17.0, v4.17.1]
-  but these were not loaded, because they are affected by security advisories
-```
-
-Adminer is only reachable for logged-in Pimcore admins (see *Access control*), so the
-endpoint is not exposed. To install, add the advisory to the ignore list in your project's
-`composer.json`:
-
-```json
-{
-    "config": {
-        "audit": {
-            "ignore": ["PKSA-5hbx-ykrq-c4p8"]
-        }
-    }
-}
-```
-
-Projects that already keep an ignore list under `config.policy.advisories.ignore-id` can add
-the id there instead. Then:
+## 1. Require the bundle
 
 ```bash
 composer require cors/adminer
 ```
+
+The bundle ships Adminer 6 (`vrana/adminer ^6.1`), which is not affected by advisory
+`PKSA-5hbx-ykrq-c4p8` (CVE-2026-25892). Projects that added this advisory to their
+`config.audit.ignore` or `config.policy.advisories.ignore-id` list for earlier versions of the
+bundle can remove the entry again.
 
 ## 2. `config/bundles.php` — register the bundle
 
@@ -76,7 +56,7 @@ the Studio plugin's `exposeRemote.js` 404s and the plugin is silently absent.
 ## 4. Verify
 
 ```bash
-bin/console debug:router | grep -i adminer      # cors_adminer + two proxy routes
+bin/console debug:router | grep -i adminer      # cors_adminer + two asset routes
 curl -sk -o /dev/null -w '%{http_code}\n' \
   https://<host>/pimcore-studio/api/cors-adminer/adminer          # 401/403 when logged out
 curl -sk -o /dev/null -w '%{http_code}\n' \
@@ -92,8 +72,8 @@ The routes live under the Studio API prefix:
 | Route | Path |
 | --- | --- |
 | `cors_adminer` | `/pimcore-studio/api/cors-adminer/adminer` |
-| asset proxy | `/pimcore-studio/api/cors-adminer/adminer/static/{path}` |
-| externals proxy | `/pimcore-studio/api/cors-adminer/externals/{path}` |
+| `cors_adminer_static` | `/pimcore-studio/api/cors-adminer/adminer/static/{path}` |
+| `cors_adminer_designs` | `/pimcore-studio/api/cors-adminer/adminer/designs/{path}` |
 
 That prefix is what every Studio installation already protects, so the bundle needs no
 firewall or `access_control` of its own:
@@ -115,7 +95,7 @@ the Studio default prefix, and only the controller's own admin check would still
 
 ## Webserver note
 
-The asset proxy serves URLs ending in `.css` and `.js`. If your webserver resolves those from
+The asset routes serve URLs ending in `.css`, `.js` and `.svg`. If your webserver resolves those from
 disk before passing the request to PHP (the classic Pimcore nginx recipe does, usually with an
 exception for `/admin`), add an exception for the Adminer path, e.g.:
 
@@ -142,8 +122,23 @@ of requests, so this is only worth knowing if you script against it.
 - **No Adminer entry in Studio** — the plugin assets are not reachable. Request
   `/bundles/corsadminer/studio/<build-id>/static/js/remoteEntry.js`; a 404 means the publish
   step ran in the wrong order, or the webserver cannot follow the asset symlink.
-- **Adminer opens but is unstyled** — the webserver is resolving the proxy's `.css`/`.js`
-  URLs from disk; see *Webserver note*.
+- **Adminer opens but is unstyled** — the webserver is resolving the asset routes'
+  `.css`/`.js` URLs from disk; see *Webserver note*.
+
+# Adminer integration
+
+The bundle runs the source version of Adminer 6 from `vendor/vrana/adminer/adminer/index.php`;
+the Composer package does not contain the compiled single-file `adminer.php`. The controller
+provides the global `adminer_object()`, which returns an `Adminer\Plugins` instance with:
+
+- `PimcoreAdminerPlugin`: connects with the credentials of Pimcore's Doctrine connection,
+  submits Adminer's login form automatically and disables the version check and the web app
+  manifest,
+- `AdminerPlugins`: sticky table headers, readable Unix timestamps, remembered menu scroll
+  position and table/column suggestions in *SQL command*,
+- the upstream plugins `frames`, `tables-filter`, `dump-date`, `dump-json`, `dump-bz2`,
+  `dump-zip`, `dump-xml`, `dump-alter` and, if the connection uses SSL, `login-ssl`,
+- the Konya design as the only stylesheet.
 
 # Pimcore Studio
 
