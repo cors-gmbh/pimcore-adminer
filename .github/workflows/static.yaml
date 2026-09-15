@@ -10,7 +10,11 @@ name: Static Tests
 # DOCKER_PHP_VERSION), ecs.php, phpstan.neon, psalm.xml, var/classes/DataObject/.gitkeep und
 # config/local/.gitkeep im Repo, sowie die Repository-Secrets PIMCORE_ENCRYPTION_SECRET,
 # PIMCORE_INSTANCE_IDENTIFIER und PIMCORE_PRODUCT_KEY (registrierte CI-Instanz, Kennung = Repo-Name).
-# Abweichende Repos (kein phpstan.neon, andere Lint-Pfade) gehören nicht in die Sync-Gruppe.
+#
+# Abweichende Pfade (z. B. Monorepos mit Bundles unter bundles/) kommen aus Repository-Variablen,
+# die der Sync nie anfasst: ECS_PATHS, PSALM_PATHS, LINT_YAML_PATHS, LINT_TWIG_PATHS
+# (jeweils leerzeichengetrennt). Nicht gesetzt gilt der Default in der Datei.
+# Repos ohne phpstan.neon gehören nicht in die Sync-Gruppe.
 
 on:
   push:
@@ -32,7 +36,10 @@ jobs:
       # registration from env_local to .env.local when the Pimcore steps are enabled.
       phpstan: true
       psalm: true
-      lint-yaml-paths: 'config src/Resources/config'
+      ecs-paths: ${{ vars.ECS_PATHS || 'src' }}
+      psalm-paths: ${{ vars.PSALM_PATHS || 'src' }}
+      lint-yaml-paths: ${{ vars.LINT_YAML_PATHS || 'config src/Resources/config' }}
+      lint-twig-paths: ${{ vars.LINT_TWIG_PATHS || 'templates' }}
     secrets:
       composer_auth: ${{ secrets.COMPOSER_AUTH }}
       # Pimcore refuses to boot without a registered instance; php-test writes this to .env.local.
