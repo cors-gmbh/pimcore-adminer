@@ -1,0 +1,5 @@
+# ⚠️  ZENTRAL VERWALTETE DATEI — NICHT LOKAL ÄNDERN!
+# Wird aus cors-gmbh/shared-workflows-private per File-Sync verteilt (templates/harness/, Gruppe
+# "Dev-Harness der Bundle-Repos"); lokale Änderungen überschreibt der nächste Sync-Lauf per PR.
+# Repo-eigene Ergänzungen gehören in compose.override.yaml, config/local/ bzw. eigene Dateien.
+# Keine zusätzlichen Routen in dieser Umgebung.
