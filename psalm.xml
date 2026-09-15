@@ -1,8 +1,19 @@
 <?xml version="1.0"?>
-<psalm>
+<!-- Public repository: cors/dev (private Packagist) is not reachable from GitHub Actions here,
+     so the shared issue handlers come from the public coreshop/test-setup package. -->
+<psalm xmlns:xi="http://www.w3.org/2001/XInclude">
+    <xi:include
+            href="vendor/coreshop/test-setup/psalm.xml"
+            xpointer="xpointer(/psalm/*[not(self::projectFiles)])"
+    />
     <projectFiles>
+        <directory name="src" />
         <ignoreFiles>
-            <directory name="src" />
+            <directory name="vendor" />
+            <!-- Adminer integration against the global Adminer 4 plugin API, excluded in phpstan.neon as well -->
+            <file name="src/lib/Pim/AdminerPlugins.php" />
+            <file name="src/lib/Pim/Helper.php" />
+            <file name="src/Controller/DefaultController.php" />
         </ignoreFiles>
     </projectFiles>
 </psalm>

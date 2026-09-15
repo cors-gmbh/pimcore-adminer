@@ -1,56 +1,39 @@
-######################
-# Compiled source    #
-######################
-*.com
-*.class
-*.dll
-*.exe
-*.o
-*.so
-
-######################
-# Packages           #
-######################
-# it's better to unpack these files and commit the raw source
-# git has its own built in compression methods
-*.7z
-*.dmg
-*.gz
-*.iso
-*.jar
-
-######################
-# Logs and databases #
-######################
-*.log
-
-######################
-# Global             #
-######################
+/vendor/
+/node_modules/
+/.phpunit.cache/
 .DS_Store
-.DS_Store\?
-._*
-.Spotlight-V100
-.Trashes
-Icon\?
-*.sublime-workspace
-*.sublime-project
-atlassian-ide-plugin.xml
 .idea/
-.project
-Thumbs.db
-phpda.html
-var
-.env.local
-public/bundles
-config/local
-vendor/
-src/Resources/app/node_modules/
-composer.lock
+.php-cs-fixer.cache
+*.log
+# dev environment only, the bundle itself must not pin its PHP dependencies
+/composer.lock
 
-# Expanded Studio frontend build. Not committed: the build ships as an archive in
+# Studio frontend project (node_modules, dist and build are ignored in assets/.gitignore)
+/assets/.rsbuild/
+/assets/@mf-types/
+
+# Expanded Studio build. Not committed: the build ships as an archive in
 # src/Resources/build-dist/build-<id>.zip, which Pimcore's BuildArchiveExtractor unpacks into
 # src/Resources/public/studio at cache warmup. The extractor's marker, lock and temporary
-# directories live next to the build.
-src/Resources/public/studio/*
-src/Resources/public/.studio*
+# directories live next to it.
+/src/Resources/public/studio/*
+/src/Resources/public/.studio*
+
+# --- dev harness ---
+# var is generated, but PHPStan (Pimcore extension) needs var/classes/DataObject in CI
+/var/*
+!/var/classes
+/var/classes/*
+!/var/classes/DataObject
+/var/classes/DataObject/*
+!/var/classes/DataObject/.gitkeep
+# the anchored var rule above does not cover the web root
+/public/var
+/public/bundles
+/public/adminer
+.env.local
+# config.yaml imports local/*.yaml; the kernel fails without the directory in CI
+/config/local/*
+!/config/local/.gitkeep
+/config/reference.php
+supervisord.pid

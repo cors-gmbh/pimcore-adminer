@@ -1,0 +1,14 @@
+# ⚠️  ZENTRAL VERWALTETE DATEI — NICHT LOKAL ÄNDERN!
+# Wird aus cors-gmbh/shared-workflows-private per File-Sync verteilt (templates/harness/, Gruppe
+# "Dev-Harness der Bundle-Repos"); lokale Änderungen überschreibt der nächste Sync-Lauf per PR.
+# Repo-eigene Ergänzungen gehören in compose.override.yaml, config/local/ bzw. eigene Dateien.
+
+pimcore_studio_backend:
+    mercure_settings:
+        # Server-side the hub is reached through the docker network, the browser
+        # goes through nginx (`location /hub` -> mercure). The key must match
+        # MERCURE_PUBLISHER_JWT_KEY / MERCURE_SUBSCRIBER_JWT_KEY of the hub container.
+        hub_url_server: '%env(MERCURE_SERVER_URL)%'
+        jwt_key: '%env(MERCURE_JWT_KEY)%'
+        # localhost is not a registered suffix, so SameSite=Strict cookies would be dropped.
+        jwt_cookie_strictness: false

@@ -15,7 +15,12 @@
 
 declare(strict_types=1);
 
-return static function (\Symplify\EasyCodingStandard\Config\ECSConfig $ecsConfig): void {
+use PhpCsFixer\Fixer\Comment\HeaderCommentFixer;
+use Symplify\EasyCodingStandard\Config\ECSConfig;
+
+// Public repository: the shared CORS tooling (cors/dev) lives on the private Packagist, which
+// GitHub Actions cannot reach from here, so the public coreshop/test-setup rule set is used.
+return static function (ECSConfig $ecsConfig): void {
     $ecsConfig->import('vendor/coreshop/test-setup/ecs.php');
     $ecsConfig->parallel();
     $ecsConfig->paths(['src']);
@@ -33,5 +38,5 @@ LICENSE.md which is distributed with this source code.
  
 EOT;
 
-    $ecsConfig->ruleWithConfiguration(\PhpCsFixer\Fixer\Comment\HeaderCommentFixer::class, ['header' => $header]);
+    $ecsConfig->ruleWithConfiguration(HeaderCommentFixer::class, ['header' => $header]);
 };

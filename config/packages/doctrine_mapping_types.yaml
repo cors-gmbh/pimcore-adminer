@@ -3,5 +3,9 @@
 # "Dev-Harness der Bundle-Repos"); lokale Änderungen überschreibt der nächste Sync-Lauf per PR.
 # Repo-eigene Ergänzungen gehören in compose.override.yaml, config/local/ bzw. eigene Dateien.
 
-_pimcore:
-    resource: "@PimcoreCoreBundle/config/routing.yaml"
+doctrine:
+    dbal:
+        connections:
+            default:
+                mapping_types:
+                    bit: boolean

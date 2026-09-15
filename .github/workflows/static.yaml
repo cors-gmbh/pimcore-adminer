@@ -1,10 +1,22 @@
 name: Static Tests
 
+# ⚠️  ZENTRAL VERWALTETE DATEI — NICHT LOKAL ÄNDERN!
+#
+# Diese Datei wird aus cors-gmbh/shared-workflows-private per File-Sync verteilt
+# (Quelle: templates/harness/static.yaml, Gruppe "Dev-Harness der Bundle-Repos").
+# Lokale Änderungen werden beim nächsten Sync-Lauf per PR überschrieben.
+#
+# Voraussetzungen im Bundle-Repo: Dev-Harness (Kernel.php, bin/console, config/, .env mit
+# DOCKER_PHP_VERSION), ecs.php, phpstan.neon, psalm.xml, var/classes/DataObject/.gitkeep und
+# config/local/.gitkeep im Repo, sowie die Repository-Secrets PIMCORE_ENCRYPTION_SECRET,
+# PIMCORE_INSTANCE_IDENTIFIER und PIMCORE_PRODUCT_KEY (registrierte CI-Instanz, Kennung = Repo-Name).
+# Abweichende Repos (kein phpstan.neon, andere Lint-Pfade) gehören nicht in die Sync-Gruppe.
+
 on:
   push:
-    branches: [ '*.x' ]
+    branches: [ '*.x', main ]
   pull_request:
-    branches: [ '*.x' ]
+    branches: [ '*.x', main ]
   workflow_dispatch:
 
 permissions:
@@ -16,6 +28,8 @@ jobs:
     with:
       # single source of truth for the PHP version: DOCKER_PHP_VERSION in .env
       versions-from-env: true
+      # pimcore stays on: PHPStan and the lints boot the Pimcore kernel, and php-test only writes the
+      # registration from env_local to .env.local when the Pimcore steps are enabled.
       phpstan: true
       psalm: true
       lint-yaml-paths: 'config src/Resources/config'

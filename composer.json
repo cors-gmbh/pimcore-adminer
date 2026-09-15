@@ -35,7 +35,11 @@
     "autoload-dev": {
         "classmap": [
             "Kernel.php"
-        ]
+        ],
+        "psr-4": {
+            "App\\": "dev",
+            "Pimcore\\Model\\DataObject\\": "var/classes/DataObject"
+        }
     },
     "extra": {
         "pimcore": {

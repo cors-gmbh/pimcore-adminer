@@ -1,3 +1,14 @@
+# ⚠️  ZENTRAL VERWALTETE DATEI — NICHT LOKAL ÄNDERN!
+#
+# Diese Datei wird aus cors-gmbh/shared-workflows-private per File-Sync verteilt
+# (Quelle: templates/harness/license.yaml). Lokale Änderungen werden beim nächsten
+# Sync-Lauf per PR überschrieben.
+#
+# Pimcore-Registrierung der Dev-Harness. Die Kennung ist der Repo-Name und steht als
+# Default (PIMCORE_INSTANCE_IDENTIFIER) in der committeten .env; Secret und Product-Key
+# kommen aus .env.local (Dev-Stack, registriert bei license.pimcore.com) bzw. aus den
+# Repository-Secrets (CI, siehe .github/workflows/static.yaml). Leere env()-Defaults
+# gehören in config/config.yaml, damit Pimcore mit seiner eigenen Meldung abbricht.
 pimcore:
     encryption:
         secret: '%env(PIMCORE_ENCRYPTION_SECRET)%'

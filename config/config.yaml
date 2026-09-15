@@ -1,7 +1,7 @@
 imports:
+    - { resource: local/*.yaml }
     - { resource: services.yaml }
     - { resource: license.yaml }
-    - { resource: 'local/' }
 
 parameters:
     # Registration values come from .env.local (dev stack, instance registered at
@@ -17,6 +17,12 @@ parameters:
 # bundle is registered in — a bundle has no business dictating the host project's Doctrine
 # or Encore setup.
 doctrine:
+    dbal:
+        connections:
+            default:
+                # DATABASE_URL defaults to the dev-compose db service in .env
+                url: '%env(DATABASE_URL)%'
+                charset: 'utf8mb4'
     orm:
         auto_generate_proxy_classes: '%kernel.debug%'
         entity_managers:
