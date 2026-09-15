@@ -1,12 +1,28 @@
 imports:
+    - { resource: local/*.yaml }
     - { resource: services.yaml }
-    - { resource: 'local/' }
+    - { resource: license.yaml }
+
+parameters:
+    # Registration values come from .env.local (dev stack, instance registered at
+    # license.pimcore.com) or from the repository secrets (CI, written to .env.local by
+    # php-test). Pimcore refuses to boot without them; the empty defaults only keep the
+    # container compilable when the variables are absent.
+    env(PIMCORE_ENCRYPTION_SECRET): ''
+    env(PIMCORE_INSTANCE_IDENTIFIER): ''
+    env(PIMCORE_PRODUCT_KEY): ''
 
 # Project-level configuration of the test application. This used to live in the bundle's
 # Resources/config/pimcore/config.yaml, which Pimcore loads into EVERY installation the
 # bundle is registered in — a bundle has no business dictating the host project's Doctrine
 # or Encore setup.
 doctrine:
+    dbal:
+        connections:
+            default:
+                # DATABASE_URL defaults to the dev-compose db service in .env
+                url: '%env(DATABASE_URL)%'
+                charset: 'utf8mb4'
     orm:
         auto_generate_proxy_classes: '%kernel.debug%'
         entity_managers:

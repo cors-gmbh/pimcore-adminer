@@ -2,6 +2,19 @@
 
 declare(strict_types=1);
 
+/*
+ * CORS GmbH
+ *
+ * This source file is available under the MIT license
+ *
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ * @copyright  Copyright (c) CORS GmbH (https://www.cors.gmbh)
+ * @license    https://www.cors.gmbh/license MIT
+ *
+ */
+
 namespace CORS\Bundle\AdminerBundle\Studio;
 
 use Pimcore\Bundle\StudioUiBundle\Build\BuildArchive;
@@ -18,6 +31,11 @@ final class WebpackEntryPointProvider implements BuildArchiveProviderInterface
 {
     use BuildArchiveExtractionTrait;
 
+    /**
+     * BuildArchive is marked internal, but it is the only way to hook into Pimcore's build extraction.
+     *
+     * @psalm-suppress InternalClass, InternalMethod
+     */
     protected function buildArchive(): BuildArchive
     {
         return new BuildArchive(

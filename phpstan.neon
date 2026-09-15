@@ -1,7 +1,13 @@
+# Public repository: cors/dev (private Packagist) is not reachable from GitHub Actions here,
+# so the shared rule set comes from the public coreshop/test-setup package.
 includes:
     - vendor/coreshop/test-setup/phpstan.neon
 
 parameters:
+    symfony:
+        containerXmlPath: var/cache/dev/KernelDevDebugContainer.xml
+
+    # Adminer integration: extends the global, non-namespaced Adminer 4 plugin API
     excludePaths:
         - 'src/lib/Pim/AdminerPlugins.php'
         - 'src/lib/Pim/Helper.php'

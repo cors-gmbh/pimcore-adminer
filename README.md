@@ -170,5 +170,53 @@ npm run build        # writes the archive; commit it together with the source ch
 
 During development `npm run dev-server` inside `assets` starts the rsbuild dev server.
 
+## Product registration
+
+The test application boots only with a registered Pimcore instance. The instance identifier
+(`PIMCORE_INSTANCE_IDENTIFIER`) is committed in `.env`; put `PIMCORE_ENCRYPTION_SECRET` and
+`PIMCORE_PRODUCT_KEY` of an instance registered at license.pimcore.com into your uncommitted
+`.env.local`. CI gets the same three values from the repository secrets of the same name.
+
+# Development
+
+The repository doubles as a runnable Pimcore application on **Pimcore 2026 with Studio** (the
+CORS bundle template: `Kernel.php`, `bin/console`, `config/`, `dev/`, `docker-compose.yaml`
+including the shared `dev-compose` stack). The bundle itself is `src/`
+(`CORSAdminerBundle::getPath()`, with `Resources/` inside); everything else at the repository
+root only serves the dev harness, the Studio frontend build (`assets/`) or the CI, and
+`.gitattributes` keeps it out of the distributed composer package.
+
+```bash
+docker compose up -d
+docker compose exec -T php composer install
+docker compose exec -T php vendor/bin/pimcore-install \
+    --install-profile='App\InstallProfile\StudioInstallProfile' \
+    --admin-username=admin --admin-password=admin --no-interaction
+docker compose exec -T php bin/console cache:clear
+docker compose exec -T php bin/console assets:install --symlink --relative public
+```
+
+Studio is then served at `https://cors-pimcore-adminer.dev.localhost/pimcore-studio/`, Adminer
+under **System → Adminer**.
+
+The install profile (`dev/InstallProfile/StudioInstallProfile.php`) declares the bundles and
+infrastructure the harness needs (Studio backend/UI, generic data index + OpenSearch, Mercure,
+Doctrine messenger transport). Connection defaults point at the dev-compose services and live
+in `.env`; the Pimcore bundles are registered in `config/bundles.php`, the bundle under
+development in `Kernel.php`.
+
+The files marked "ZENTRAL VERWALTETE DATEI" (`docker-compose.yaml`, `bin/console`, most of
+`config/`, `.github/workflows/static.yaml`) are synced from `cors-gmbh/shared-workflows-private`;
+repository-specific additions belong in `compose.override.yaml`, `config/local/` or separate files.
+
+Static checks run the same way as in CI. This repository is public, so the shared rule set comes
+from the public `coreshop/test-setup` package instead of the private `cors/dev`:
+
+```bash
+vendor/bin/ecs check src
+vendor/bin/phpstan analyse
+vendor/bin/psalm
+```
+
 # License
 MIT and therefore POCL compatible

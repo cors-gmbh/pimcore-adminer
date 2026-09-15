@@ -1,8 +1,2 @@
 parameters:
     secret: pjvpZ/xL32KEEOp3bNanjpcfTetW0w2H04b78A6CXKI=
-
-services:
-    _defaults:
-        autowire: true
-        autoconfigure: true
-        public: false

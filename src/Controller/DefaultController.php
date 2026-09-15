@@ -42,8 +42,9 @@ namespace CORS\Bundle\AdminerBundle\Controller {
 
         protected string $adminerHome = '';
 
-        public function __construct(private readonly ?TokenStorageInterface $tokenStorage = null)
-        {
+        public function __construct(
+            private readonly ?TokenStorageInterface $tokenStorage = null,
+        ) {
         }
 
         #[Route(path: self::ROUTE_PREFIX . '/adminer', name: 'cors_adminer')]
@@ -89,7 +90,7 @@ namespace CORS\Bundle\AdminerBundle\Controller {
 
             // Persist whatever Adminer wrote to the session. Adminer calls exit() on its
             // post-login redirect, in which case PHP's shutdown handler does this instead.
-            if (PHP_SESSION_ACTIVE === session_status()) {
+            if (\PHP_SESSION_ACTIVE === session_status()) {
                 session_write_close();
             }
 
@@ -239,7 +240,7 @@ namespace CORS\Bundle\AdminerBundle\Controller {
 
             $session = $request->getSession();
 
-            if ($session->isStarted() || PHP_SESSION_ACTIVE === session_status() || headers_sent()) {
+            if ($session->isStarted() || \PHP_SESSION_ACTIVE === session_status() || headers_sent()) {
                 return;
             }
 
