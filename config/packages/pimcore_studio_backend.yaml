@@ -10,5 +10,3 @@ pimcore_studio_backend:
         # MERCURE_PUBLISHER_JWT_KEY / MERCURE_SUBSCRIBER_JWT_KEY of the hub container.
         hub_url_server: '%env(MERCURE_SERVER_URL)%'
         jwt_key: '%env(MERCURE_JWT_KEY)%'
-        # localhost is not a registered suffix, so SameSite=Strict cookies would be dropped.
-        jwt_cookie_strictness: false
