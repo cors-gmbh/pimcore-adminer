@@ -73,7 +73,20 @@ namespace CORS\Bundle\AdminerBundle\Controller {
                         throw new \Exception('Method setAbsolutePaths does not exist in MailHelper.');
                     }
 
-                    return str_replace('static/editing.js', Helper::getHostUrl() . self::ROUTE_PREFIX . '/adminer/static/editing.js', $html);
+                    $base = Helper::getHostUrl() . self::ROUTE_PREFIX;
+                    $html = str_replace('"static/editing.js"', '"' . $base . '/adminer/static/editing.js"', $html);
+
+                    /*
+                     * Asset URLs must not end in .css/.js: common Pimcore nginx setups serve
+                     * every such path as a static file (only /admin and /studio/api are
+                     * excluded), so the request never reaches PHP and ends in a 404. The file
+                     * goes into the query string instead, which those location rules ignore.
+                     */
+                    return str_replace(
+                        [$base . '/adminer/static/', $base . '/externals/'],
+                        [$base . '/asset?path=adminer/static/', $base . '/asset?path=externals/'],
+                        $html,
+                    );
                 } catch (\Exception $e) {
                     throw new \Exception('Error in MailHelper::setAbsolutePaths: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine());
                 }
@@ -99,8 +112,7 @@ namespace CORS\Bundle\AdminerBundle\Controller {
             return $this->mergeAdminerHeaders($response);
         }
 
-        #[Route(path: self::ROUTE_PREFIX . '/adminer/static/{path}', requirements: ['path' => '.*'])]
-        #[Route(path: self::ROUTE_PREFIX . '/externals/{path}', requirements: ['path' => '.*'], defaults: ['type' => 'external'])]
+        #[Route(path: self::ROUTE_PREFIX . '/asset', name: 'cors_adminer_asset')]
         public function proxyAction(Request $request): Response
         {
             $this->denyUnlessAdmin($request);
@@ -109,34 +121,24 @@ namespace CORS\Bundle\AdminerBundle\Controller {
             $response = new Response();
             $content = '';
 
-            // proxy for resources
-            $path = $request->get('path');
+            $path = $request->query->getString('path');
 
             if (preg_match('@\.(css|js|ico|png|jpg|gif)$@', $path)) {
-                /** @psalm-suppress InternalMethod, InternalClass */
-                if ('external' === $request->get('type')) {
-                    $path = '../' . $path;
-                }
+                $filePath = $this->resolveAssetPath($this->adminerHome . $path);
 
-                if (str_starts_with($path, 'static/')) {
-                    $path = 'adminer/' . $path;
-                }
-
-                $filePath = $this->resolveAssetPath($this->adminerHome . '/' . $path);
-                if (null === $filePath || !file_exists($filePath)) {
-                    $filePath = $this->resolveAssetPath($this->adminerHome . 'adminer/static/' . $path);
-                }
                 // it seems that css files need the right content-type (Chrome)
-                if (preg_match('@.css$@', $path)) {
+                if (str_ends_with($path, '.css')) {
                     $response->headers->set('Content-Type', 'text/css');
-                } elseif (preg_match('@.js$@', $path)) {
+                } elseif (str_ends_with($path, '.js')) {
                     $response->headers->set('Content-Type', 'text/javascript');
                 }
 
-                if (null !== $filePath && file_exists($filePath)) {
+                // externals/jush is a git submodule the Composer package does not ship, so its
+                // files are answered empty: Adminer only loses syntax highlighting without it.
+                if (null !== $filePath && is_file($filePath)) {
                     $content = file_get_contents($filePath);
 
-                    if (preg_match('@default.css$@', $path)) {
+                    if (str_ends_with($path, 'default.css')) {
                         // append custom styles, because in Adminer everything is hardcoded
                         $content .= file_get_contents($this->adminerHome . 'designs/konya/adminer.css');
                     }
