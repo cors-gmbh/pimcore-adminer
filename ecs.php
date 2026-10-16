@@ -9,7 +9,7 @@
  * LICENSE.md which is distributed with this source code.
  *
  * @copyright  Copyright (c) CORS GmbH (https://www.cors.gmbh)
- * @license    https://www.cors.gmbh/license MIT
+ * @license    https://opensource.org/license/mit MIT
  *
  */
 
@@ -34,7 +34,7 @@ Full copyright and license information is available in
 LICENSE.md which is distributed with this source code.
 
 @copyright  Copyright (c) CORS GmbH (https://www.cors.gmbh)
-@license    https://www.cors.gmbh/license MIT
+@license    https://opensource.org/license/mit MIT
  
 EOT;
 
