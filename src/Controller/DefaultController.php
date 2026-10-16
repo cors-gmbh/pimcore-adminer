@@ -66,6 +66,22 @@ class DefaultController
 
         $profiler?->disable();
 
+        // Adminer re-opens the session after it has already flushed the page header
+        // (design.inc.php: stop_session() followed by ob_flush()). After output,
+        // session_start() only succeeds when PHP has no cache limiter to send. Symfony
+        // sets session.cache_limiter to "0" (FrameworkExtension), which PHP still treats
+        // as a limiter and rejects once headers are sent: the re-open after an executed
+        // SQL query then fails, $_SESSION is empty while the page is rendered, and the
+        // next POST is refused with "Invalid CSRF token". Adminer's own bootstrap calls
+        // session_cache_limiter('') for the same reason, but that block is skipped here
+        // because the Pimcore session is already open. The value can only be changed
+        // while no session is active, hence before ensureSessionIsOpen().
+        $cacheLimiter = ini_get('session.cache_limiter');
+
+        if (\PHP_SESSION_ACTIVE !== session_status()) {
+            @ini_set('session.cache_limiter', '');
+        }
+
         $this->ensureSessionIsOpen($request);
 
         // Adminer's stop_session() turns session.use_cookies off for the rest of the
@@ -96,6 +112,10 @@ class DefaultController
         // login page and redirects, in which case PHP's shutdown handler does this instead.
         if (\PHP_SESSION_ACTIVE === session_status()) {
             session_write_close();
+        }
+
+        if (false !== $cacheLimiter) {
+            @ini_set('session.cache_limiter', $cacheLimiter);
         }
 
         return $this->mergeAdminerHeaders(new Response());
