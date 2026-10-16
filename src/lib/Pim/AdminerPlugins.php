@@ -17,19 +17,25 @@ declare(strict_types=1);
 
 namespace CORS\Bundle\AdminerBundle\lib\Pim;
 
-class AdminerPlugins
+/**
+ * CORS additions to the Adminer UI: sticky table headers, readable Unix timestamps, a remembered
+ * scroll position of the menu and table/column suggestions next to the SQL command textarea.
+ */
+final class AdminerPlugins extends \Adminer\Plugin
 {
-    public function head()
+    /**
+     * Returns nothing, so that Adminer's own head() still prints its stylesheets afterwards.
+     */
+    public function head(?bool $dark = null): void
     {
-        echo script('verifyVersion = function () {};');
         /** @see https://github.com/stano/adminer-floatThead */
-        echo '<script' . nonce() . ' src="' . h('https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js') . '"></script>';
-        echo '<script' . nonce() . ' src="' . h('https://cdnjs.cloudflare.com/ajax/libs/floatthead/2.0.3/jquery.floatThead.min.js') . '"></script>';
-        echo '<script' . nonce() . '>$(document).ready(function() { $(\'#content table\').first().floatThead(); });</script>';
+        echo '<script' . \Adminer\nonce() . ' src="' . \Adminer\h('https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js') . '"></script>';
+        echo '<script' . \Adminer\nonce() . ' src="' . \Adminer\h('https://cdnjs.cloudflare.com/ajax/libs/floatthead/2.0.3/jquery.floatThead.min.js') . '"></script>';
+        echo '<script' . \Adminer\nonce() . '>$(document).ready(function() { $(\'#content table\').first().floatThead(); });</script>';
         echo '<style type="text/css">.floatThead-container { overflow: visible !important; }</style>';
 
         /** @see https://gist.github.com/scr4bble/9ee4a9f1405ffc1465f59e03768e2768 */
-        echo script(
+        echo \Adminer\script(
             <<<EOT
 document.addEventListener('DOMContentLoaded', function(event) {
 	var date = new Date();
@@ -56,7 +62,7 @@ EOT
         );
 
         /** @see https://gist.github.com/NoxArt/8085521 */
-        echo script(
+        echo \Adminer\script(
             <<<EOT
 		(function(){
 			var executed = false;
@@ -110,10 +116,11 @@ EOT
     ],
 ];
 
-        foreach (array_keys(tables_list()) as $table) {
+        foreach (array_keys(\Adminer\tables_list()) as $table) {
+            $table = (string) $table;
             $suggests['___tables___'][] = $table;
-            foreach (fields($table) as $field => $foo) {
-                $suggests[$table][] = $field;
+            foreach (array_keys(\Adminer\fields($table)) as $field) {
+                $suggests[$table][] = (string) $field;
             }
         }
 
@@ -165,7 +172,7 @@ EOT
 </style>
 EOT;
 
-        echo script(
+        echo \Adminer\script(
             <<<EOT
     function domReady (fn) {
         document.addEventListener("DOMContentLoaded", fn)
@@ -228,14 +235,14 @@ EOT
 
         suggests_mysql += "<dt>
 EOT
-    . lang('Tables') . <<<EOT
+    . \Adminer\lang('Tables') . <<<EOT
         </dt>"
         for (var k in suggests['___tables___']) {
             suggests_mysql += "<dd><a href='#' data-table='1'>" + suggests['___tables___'][k] + "</a></dd>"
         }
         suggests_mysql += "<dt>
 EOT
-    . lang('SQL command') . <<<EOT
+    . \Adminer\lang('SQL command') . <<<EOT
 </dt>"
         for (var k in suggests['___mysql___']) {
             suggests_mysql += "<dd><a href='#' data-nobt='1'>" + suggests['___mysql___'][k] + "</a></dd>"
@@ -246,7 +253,7 @@ EOT
             '<div id="suggest_tablefields_container" style="height:' + sqlarea.offsetHeight + 'px;top:0;left:' + posLeft + 'px">' +
             '<input autocomplete="off" id="suggest_search" type="text" placeholder="
 EOT
-    . lang('Search') . <<<EOT
+    . \Adminer\lang('Search') . <<<EOT
 ..."/><dl id="suggest_tablefields" class="noselect"></dl></div>')
         compile(suggests_mysql)
 
@@ -320,74 +327,6 @@ EOT
 
         }, false)
     })
-EOT
-        );
-    }
-
-    public function tablesPrint($tables)
-    {
-        echo script(
-            <<<EOT
-            var tablesFilterTimeout = null;
-            var tablesFilterValue = '';
-
-            function tablesFilter () {
-                var value = qs('#filter-field').value.toLowerCase();
-                if (value == tablesFilterValue) {
-                    return;
-                }
-                tablesFilterValue = value;
-                if (value != '') {
-                    var reg = (value + '').replace(/([\\\.\+\*\?\[\^\]\$\(\)\{\}\=\!\<\>\|\:])/g, '\\$1');
-                    reg = new RegExp('(' + reg + ')', 'gi');
-                }
-                if (sessionStorage) {
-                    sessionStorage.setItem('adminer_tables_filter', value);
-                }
-                var tables = qsa('li', qs('#tables'));
-                for (var i = 0; i < tables.length; i++) {
-                    var a = null;
-                    var text = tables[i].getAttribute('data-table-name');
-                    if (text == null) {
-                        a = qsa('a', tables[i])[1];
-                        text = a.innerHTML.trim();
-
-                        tables[i].setAttribute('data-table-name', text);
-                        a.setAttribute('data-link', 'main');
-                    } else {
-                        a = qs('a[data-link="main"]', tables[i]);
-                    }
-                    if (value == '') {
-                        tables[i].className = '';
-                        a.innerHTML = text;
-                    } else {
-                        tables[i].className = (text.toLowerCase().indexOf(value) == -1 ? 'hidden' : '');
-                        a.innerHTML = text.replace(reg, '<strong>$1</strong>');
-                    }
-                }
-            }
-
-            function tablesFilterInput () {
-                window.clearTimeout(tablesFilterTimeout);
-                tablesFilterTimeout = window.setTimeout(tablesFilter, 200);
-            }
-
-            sessionStorage && document.addEventListener('DOMContentLoaded', function () {
-                qs('#filter-field').oninput = tablesFilterInput;
-            
-                var db = qs('#dbs').querySelector('select');
-                db = db.options[db.selectedIndex].text;
-                if (db == sessionStorage.getItem('adminer_tables_filter_db') && sessionStorage.getItem('adminer_tables_filter')) {
-                    qs('#filter-field').value = sessionStorage.getItem('adminer_tables_filter');
-                    tablesFilter();
-                }
-                sessionStorage.setItem('adminer_tables_filter_db', db);
-            });
-        </script>
-        <p class="jsonly"><input id="filter-field" autocomplete="off" placeholder="
-EOT
-            . lang('Search') . <<<EOT
-">
 EOT
         );
     }

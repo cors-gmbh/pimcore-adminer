@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 <!-- Public repository: cors/dev (private Packagist) is not reachable from GitHub Actions here,
      so the shared issue handlers come from the public coreshop/test-setup package. -->
-<psalm xmlns:xi="http://www.w3.org/2001/XInclude">
+<!-- findUnusedIssueHandlerSuppression: the shared handlers suppress issues (e.g. UndefinedConstant)
+     that this bundle no longer triggers. -->
+<psalm xmlns:xi="http://www.w3.org/2001/XInclude" findUnusedIssueHandlerSuppression="false">
     <xi:include
             href="vendor/coreshop/test-setup/psalm.xml"
             xpointer="xpointer(/psalm/*[not(self::projectFiles)])"
@@ -10,10 +12,27 @@
         <directory name="src" />
         <ignoreFiles>
             <directory name="vendor" />
-            <!-- Adminer integration against the global Adminer 4 plugin API, excluded in phpstan.neon as well -->
-            <file name="src/lib/Pim/AdminerPlugins.php" />
-            <file name="src/lib/Pim/Helper.php" />
-            <file name="src/Controller/DefaultController.php" />
         </ignoreFiles>
     </projectFiles>
+    <!-- Adminer 6 is not autoloadable: its classes and functions are declared by its bootstrap,
+         which the controller includes at runtime (same list as scanFiles in phpstan.neon). -->
+    <stubs>
+        <file name="vendor/vrana/adminer/adminer/include/functions.inc.php" preloadClasses="true" />
+        <file name="vendor/vrana/adminer/adminer/include/html.inc.php" />
+        <file name="vendor/vrana/adminer/adminer/include/lang.inc.php" />
+        <file name="vendor/vrana/adminer/adminer/include/driver.inc.php" />
+        <file name="vendor/vrana/adminer/adminer/include/adminer.inc.php" />
+        <file name="vendor/vrana/adminer/adminer/include/plugins.inc.php" />
+        <file name="vendor/vrana/adminer/adminer/include/plugin.inc.php" />
+        <file name="vendor/vrana/adminer/adminer/drivers/mysql.inc.php" />
+        <file name="vendor/vrana/adminer/plugins/frames.php" />
+        <file name="vendor/vrana/adminer/plugins/tables-filter.php" />
+        <file name="vendor/vrana/adminer/plugins/dump-date.php" />
+        <file name="vendor/vrana/adminer/plugins/dump-json.php" />
+        <file name="vendor/vrana/adminer/plugins/dump-bz2.php" />
+        <file name="vendor/vrana/adminer/plugins/dump-zip.php" />
+        <file name="vendor/vrana/adminer/plugins/dump-xml.php" />
+        <file name="vendor/vrana/adminer/plugins/dump-alter.php" />
+        <file name="vendor/vrana/adminer/plugins/login-ssl.php" />
+    </stubs>
 </psalm>

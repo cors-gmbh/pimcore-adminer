@@ -7,11 +7,23 @@ parameters:
     symfony:
         containerXmlPath: var/cache/dev/KernelDevDebugContainer.xml
 
-    # Adminer integration: extends the global, non-namespaced Adminer 4 plugin API
-    excludePaths:
-        - 'src/lib/Pim/AdminerPlugins.php'
-        - 'src/lib/Pim/Helper.php'
-        - 'src/Controller/DefaultController.php'
-
-    ignoreErrors:
-        - '/Constant PIMCORE_COMPOSER_PATH not found./'
+    # Adminer 6 is not autoloadable: its classes and functions are declared by its bootstrap, which
+    # the controller includes at runtime. Only scanned for symbols, never analysed.
+    scanFiles:
+        - vendor/vrana/adminer/adminer/include/functions.inc.php
+        - vendor/vrana/adminer/adminer/include/html.inc.php
+        - vendor/vrana/adminer/adminer/include/lang.inc.php
+        - vendor/vrana/adminer/adminer/include/driver.inc.php
+        - vendor/vrana/adminer/adminer/include/adminer.inc.php
+        - vendor/vrana/adminer/adminer/include/plugins.inc.php
+        - vendor/vrana/adminer/adminer/include/plugin.inc.php
+        - vendor/vrana/adminer/adminer/drivers/mysql.inc.php
+        - vendor/vrana/adminer/plugins/frames.php
+        - vendor/vrana/adminer/plugins/tables-filter.php
+        - vendor/vrana/adminer/plugins/dump-date.php
+        - vendor/vrana/adminer/plugins/dump-json.php
+        - vendor/vrana/adminer/plugins/dump-bz2.php
+        - vendor/vrana/adminer/plugins/dump-zip.php
+        - vendor/vrana/adminer/plugins/dump-xml.php
+        - vendor/vrana/adminer/plugins/dump-alter.php
+        - vendor/vrana/adminer/plugins/login-ssl.php

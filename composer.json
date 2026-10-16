@@ -19,7 +19,7 @@
     "require": {
         "pimcore/pimcore": "^2026.2",
         "pimcore/studio-ui-bundle": "^2026.2",
-        "vrana/adminer": "^4.17"
+        "vrana/adminer": "^6.1"
     },
     "require-dev": {
         "symfony/runtime": "^6.4",
@@ -38,7 +38,8 @@
         ],
         "psr-4": {
             "App\\": "dev",
-            "Pimcore\\Model\\DataObject\\": "var/classes/DataObject"
+            "Pimcore\\Model\\DataObject\\": "var/classes/DataObject",
+            "CORS\\Bundle\\AdminerBundle\\Tests\\": "tests/"
         }
     },
     "extra": {
@@ -54,13 +55,6 @@
         "allow-plugins": {
             "php-http/discovery": true,
             "symfony/runtime": true
-        },
-        "policy": {
-            "advisories": {
-                "ignore-id": {
-                    "PKSA-5hbx-ykrq-c4p8": "CVE-2026-25892, unauthenticated DoS via ?script=version. Adminer is only reachable behind the Pimcore admin check in DefaultController, so the unauthenticated endpoint is not exposed. Fixed upstream in 5.4.2, but 5.x/6.x namespace the plugin API (Adminer\\Plugin) and require a rewrite of the integration."
-                }
-            }
         }
     }
 }
